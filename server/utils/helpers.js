@@ -1,0 +1,19 @@
+export class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = true;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+export const formatValidationErrors = (errors) => {
+  return errors.array().map((err) => ({
+    field: err.path,
+    message: err.msg,
+  }));
+};
