@@ -23,6 +23,7 @@ import {
   Award,
 } from 'lucide-react';
 import { DEPARTMENTS, PROGRAMMES, SEMESTERS } from '../../utils/constants';
+import { isSupabaseConfigured, supabaseClasses } from '../../services/supabase';
 
 const ClassManagement = () => {
   const [classes, setClasses] = useState([]);
@@ -58,6 +59,11 @@ const ClassManagement = () => {
   const fetchClasses = async () => {
     try {
       setLoading(true);
+      if (isSupabaseConfigured) {
+        const data = await supabaseClasses.getAllClasses();
+        setClasses(data);
+        return;
+      }
       const res = await api.get('/classes');
       setClasses(res.data.data.classes || []);
     } catch (err) {
@@ -111,6 +117,22 @@ const ClassManagement = () => {
     setSubmitting(true);
 
     try {
+      if (isSupabaseConfigured) {
+        if (editingClass) {
+          await supabaseClasses.updateClass(editingClass._id || editingClass.id, formData);
+          setActionSuccess(`Class "${formData.className}" updated successfully.`);
+        } else {
+          await supabaseClasses.createClass(formData);
+          setActionSuccess(
+            `Class "${formData.className}" created and mapped to ${formData.facultyEmail}.`
+          );
+        }
+        setModalOpen(false);
+        fetchClasses();
+        setTimeout(() => setActionSuccess(''), 5000);
+        return;
+      }
+
       if (editingClass) {
         await api.put(`/classes/${editingClass._id}`, formData);
         setActionSuccess(`Class "${formData.className}" updated successfully.`);
@@ -124,7 +146,7 @@ const ClassManagement = () => {
       fetchClasses();
       setTimeout(() => setActionSuccess(''), 5000);
     } catch (err) {
-      setModalError(err.response?.data?.message || 'Failed to save class details.');
+      setModalError(err.response?.data?.message || err.message || 'Failed to save class details.');
     } finally {
       setSubmitting(false);
     }
@@ -136,12 +158,20 @@ const ClassManagement = () => {
     }
 
     try {
+      if (isSupabaseConfigured) {
+        await supabaseClasses.deleteClass(classId);
+        setActionSuccess(`Class "${className}" deleted successfully.`);
+        fetchClasses();
+        setTimeout(() => setActionSuccess(''), 4000);
+        return;
+      }
+
       await api.delete(`/classes/${classId}`);
       setActionSuccess(`Class "${className}" deleted successfully.`);
       fetchClasses();
       setTimeout(() => setActionSuccess(''), 4000);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete class.');
+      alert(err.response?.data?.message || err.message || 'Failed to delete class.');
     }
   };
 

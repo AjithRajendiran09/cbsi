@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { isSupabaseConfigured, supabaseAssessments } from '../services/supabase';
+import { DIMENSIONS } from '../utils/constants';
 
 const AssessmentContext = createContext(null);
 
@@ -25,6 +27,13 @@ export const AssessmentProvider = ({ children }) => {
     const loadInventory = async () => {
       try {
         setLoading(true);
+        if (isSupabaseConfigured) {
+          const qs = await supabaseAssessments.getQuestions();
+          setQuestions(qs);
+          setDimensions(DIMENSIONS);
+          return;
+        }
+
         const [qRes, dRes] = await Promise.all([
           api.get('/questions'),
           api.get('/dimensions'),
@@ -88,6 +97,19 @@ export const AssessmentProvider = ({ children }) => {
     setError(null);
 
     try {
+      if (isSupabaseConfigured) {
+        const user = JSON.parse(localStorage.getItem('cbsi_user') || '{}');
+        const formatted = questions.map((q) => ({
+          statementNumber: q.statementNumber,
+          dimensionCode: q.dimensionCode,
+          score: responses[q._id || q.id] !== undefined ? responses[q._id || q.id] : 0,
+          reverseScored: q.reverseScored,
+        }));
+        const assessment = await supabaseAssessments.submitAssessment(user, formatted, participantInfo);
+        clearDraft();
+        return assessment;
+      }
+
       const formattedResponses = questions.map((q) => ({
         question: q._id,
         score: responses[q._id] !== undefined ? responses[q._id] : 0,

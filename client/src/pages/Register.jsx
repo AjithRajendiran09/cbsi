@@ -16,6 +16,7 @@ import {
   School,
 } from 'lucide-react';
 import { DEPARTMENTS, PROGRAMMES, SEMESTERS } from '../utils/constants';
+import { isSupabaseConfigured, supabaseClasses } from '../services/supabase';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -44,6 +45,11 @@ const Register = () => {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
+        if (isSupabaseConfigured) {
+          const classes = await supabaseClasses.getPublicClasses();
+          setAvailableClasses(classes);
+          return;
+        }
         const res = await api.get('/classes/public');
         setAvailableClasses(res.data.data.classes || []);
       } catch (err) {

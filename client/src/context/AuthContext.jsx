@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { isSupabaseConfigured, supabaseAuth } from '../services/supabase';
 
 const AuthContext = createContext(null);
 
@@ -10,6 +11,25 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchMe = async () => {
+      if (isSupabaseConfigured) {
+        try {
+          const session = await supabaseAuth.getSession();
+          if (session?.user) {
+            const profile = await supabaseAuth.getProfile(session.user.id);
+            if (profile) {
+              setUser(profile);
+              setToken(session.access_token);
+              localStorage.setItem('cbsi_user', JSON.stringify(profile));
+            }
+          }
+        } catch (err) {
+          console.error('Failed to load Supabase session:', err);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
       if (token) {
         try {
           const res = await api.get('/auth/me');
@@ -27,6 +47,17 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = async (email, password) => {
+    if (isSupabaseConfigured) {
+      const { user: supabaseUser, session } = await supabaseAuth.login(email, password);
+      setUser(supabaseUser);
+      setToken(session?.access_token || null);
+      if (session?.access_token) {
+        localStorage.setItem('cbsi_token', session.access_token);
+      }
+      localStorage.setItem('cbsi_user', JSON.stringify(supabaseUser));
+      return supabaseUser;
+    }
+
     const res = await api.post('/auth/login', { email, password });
     const { token: newToken, user: newUser } = res.data.data;
     localStorage.setItem('cbsi_token', newToken);
@@ -37,6 +68,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
+    if (isSupabaseConfigured) {
+      const { user: supabaseUser, session } = await supabaseAuth.register(userData);
+      setUser(supabaseUser);
+      setToken(session?.access_token || null);
+      if (session?.access_token) {
+        localStorage.setItem('cbsi_token', session.access_token);
+      }
+      localStorage.setItem('cbsi_user', JSON.stringify(supabaseUser));
+      return supabaseUser;
+    }
+
     const res = await api.post('/auth/register', userData);
     const { token: newToken, user: newUser } = res.data.data;
     localStorage.setItem('cbsi_token', newToken);
@@ -46,7 +88,10 @@ export const AuthProvider = ({ children }) => {
     return newUser;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (isSupabaseConfigured) {
+      await supabaseAuth.logout();
+    }
     localStorage.removeItem('cbsi_token');
     localStorage.removeItem('cbsi_user');
     setToken(null);
