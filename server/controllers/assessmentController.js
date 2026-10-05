@@ -50,10 +50,14 @@ export const submitAssessment = asyncHandler(async (req, res, next) => {
       designation: req.user.designation,
       academicYear: req.user.academicYear,
     };
+    if (req.user.classSection) {
+      existingIncomplete.classSection = req.user.classSection;
+    }
     assessment = await existingIncomplete.save();
   } else {
     assessment = await Assessment.create({
       user: req.user._id,
+      classSection: req.user.classSection || undefined,
       inventoryVersion: CURRENT_VERSION,
       responses: validatedResponses,
       dimensionScores,
@@ -115,6 +119,7 @@ export const startAssessment = asyncHandler(async (req, res, next) => {
 
   const assessment = await Assessment.create({
     user: req.user._id,
+    classSection: req.user.classSection || undefined,
     inventoryVersion: CURRENT_VERSION,
     responses: [],
     participantInfo: {

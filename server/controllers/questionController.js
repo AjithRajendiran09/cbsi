@@ -37,6 +37,40 @@ export const getDimensions = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @route   GET /api/admin/questions
+ * @desc    Get all questions for admin (including inactive, with filters)
+ * @access  Admin
+ */
+export const getAdminQuestions = asyncHandler(async (req, res) => {
+  const { version, status, dimensionCode, search } = req.query;
+  const filter = {};
+
+  if (version) {
+    filter.version = version;
+  }
+  if (status === 'active') {
+    filter.active = true;
+  } else if (status === 'inactive') {
+    filter.active = false;
+  }
+  if (dimensionCode && dimensionCode !== 'ALL') {
+    filter.dimensionCode = dimensionCode;
+  }
+  if (search) {
+    filter.text = { $regex: search, $options: 'i' };
+  }
+
+  const questions = await Question.find(filter)
+    .populate('dimension', 'name code description')
+    .sort({ order: 1, statementNumber: 1 });
+
+  res.json({
+    success: true,
+    data: { questions, count: questions.length },
+  });
+});
+
+/**
  * @route   POST /api/admin/questions
  * @desc    Create a new question
  * @access  Admin
@@ -49,13 +83,25 @@ export const createQuestion = asyncHandler(async (req, res, next) => {
     return next(new AppError('Invalid dimension code.', 400));
   }
 
+  let finalStmt = Number(statementNumber);
+  if (!finalStmt) {
+    const lastQ = await Question.findOne({ version: version || CURRENT_VERSION }).sort({ statementNumber: -1 });
+    finalStmt = lastQ ? lastQ.statementNumber + 1 : 1;
+  }
+
+  let finalOrder = Number(order);
+  if (!finalOrder) {
+    finalOrder = finalStmt;
+  }
+
   const question = await Question.create({
-    text,
+    text: text.trim(),
     dimension: dimension._id,
     dimensionCode,
-    statementNumber,
-    order: order || statementNumber,
+    statementNumber: finalStmt,
+    order: finalOrder,
     version: version || CURRENT_VERSION,
+    active: true,
   });
 
   await createAuditLog({
@@ -63,7 +109,7 @@ export const createQuestion = asyncHandler(async (req, res, next) => {
     userId: req.user._id,
     targetType: 'question',
     targetId: question._id,
-    details: { text, dimensionCode, statementNumber },
+    details: { text: question.text, dimensionCode, statementNumber: finalStmt },
     ipAddress: req.ip,
   });
 
@@ -84,11 +130,12 @@ export const updateQuestion = asyncHandler(async (req, res, next) => {
     return next(new AppError('Question not found.', 404));
   }
 
-  const { text, dimensionCode, order, statementNumber } = req.body;
+  const { text, dimensionCode, order, statementNumber, active } = req.body;
 
-  if (text) question.text = text;
-  if (order) question.order = order;
-  if (statementNumber) question.statementNumber = statementNumber;
+  if (text !== undefined) question.text = text.trim();
+  if (order !== undefined) question.order = Number(order);
+  if (statementNumber !== undefined) question.statementNumber = Number(statementNumber);
+  if (active !== undefined) question.active = Boolean(active);
 
   if (dimensionCode) {
     const dimension = await Dimension.findOne({ code: dimensionCode });
@@ -113,6 +160,34 @@ export const updateQuestion = asyncHandler(async (req, res, next) => {
   res.json({
     success: true,
     data: { question },
+  });
+});
+
+/**
+ * @route   DELETE /api/admin/questions/:id
+ * @desc    Permanently delete a question
+ * @access  Admin
+ */
+export const deleteQuestion = asyncHandler(async (req, res, next) => {
+  const question = await Question.findById(req.params.id);
+  if (!question) {
+    return next(new AppError('Question not found.', 404));
+  }
+
+  await question.deleteOne();
+
+  await createAuditLog({
+    action: AUDIT_ACTIONS.QUESTION_DELETED,
+    userId: req.user._id,
+    targetType: 'question',
+    targetId: question._id,
+    details: { text: question.text, statementNumber: question.statementNumber },
+    ipAddress: req.ip,
+  });
+
+  res.json({
+    success: true,
+    message: 'Question permanently deleted.',
   });
 });
 

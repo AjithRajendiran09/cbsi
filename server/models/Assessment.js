@@ -73,6 +73,10 @@ const assessmentSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'User is required'],
     },
+    classSection: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ClassSection',
+    },
     inventoryVersion: {
       type: String,
       required: true,

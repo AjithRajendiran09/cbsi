@@ -141,21 +141,21 @@ const Report = () => {
         className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm space-y-8 print-page"
       >
         {/* Institutional Header */}
-        <div className="border-b-2 border-slate-900 pb-6 flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2 text-blue-900">
-              <Compass className="w-8 h-8 text-blue-800" />
-              <span className="font-display font-black text-xl tracking-tight">CAIAS</span>
+        <div className="border-b-2 border-slate-900 pb-6 flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <img
+              src="/caias-logo.png"
+              alt="CAIAS - Christ Academy Institute for Advanced Studies"
+              className="h-14 sm:h-16 w-auto object-contain"
+            />
+            <div className="pt-0.5">
+              <p className="text-xs text-slate-600">
+                Hullahalli, Begur - Koppa Road, Bengaluru, Karnataka 560083
+              </p>
+              <p className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider mt-0.5">
+                Department of Behavioural Sciences & Management Studies
+              </p>
             </div>
-            <h1 className="font-display font-bold text-lg text-slate-900 leading-snug">
-              Christ Academy Institute for Advanced Studies
-            </h1>
-            <p className="text-xs text-slate-600">
-              Hullahalli, Begur - Koppa Road, Bengaluru, Karnataka 560083
-            </p>
-            <p className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">
-              Department of Behavioural Sciences & Management Studies
-            </p>
           </div>
 
           <div className="text-right space-y-1">
@@ -329,9 +329,12 @@ const Report = () => {
 
         {/* Required Pilot Study Disclaimer */}
         <div className="pt-6 border-t border-slate-200 text-center space-y-2 page-break-inside-avoid">
-          <div className="inline-flex items-center space-x-1 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Institutional Research Disclaimer</span>
+          <div className="flex items-center justify-center space-x-2">
+            <img src="/caias-emblem.png" alt="CAIAS Crest" className="h-6 w-auto opacity-75" />
+            <div className="inline-flex items-center space-x-1 text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Institutional Research Disclaimer</span>
+            </div>
           </div>
           <p className="text-[10px] text-slate-500 max-w-2xl mx-auto leading-relaxed">
             CBSI Version 1.0 is a pilot behavioural inventory intended for educational, mentoring,

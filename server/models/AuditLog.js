@@ -12,6 +12,7 @@ const auditLogSchema = new mongoose.Schema(
         'question_created',
         'question_modified',
         'question_deactivated',
+        'question_deleted',
         'dimension_modified',
         'user_created',
         'user_role_changed',
@@ -19,6 +20,9 @@ const auditLogSchema = new mongoose.Schema(
         'data_exported',
         'login',
         'login_failed',
+        'class_created',
+        'class_updated',
+        'class_deleted',
       ],
     },
     user: {
@@ -27,7 +31,7 @@ const auditLogSchema = new mongoose.Schema(
     },
     targetType: {
       type: String,
-      enum: ['user', 'question', 'dimension', 'assessment', 'export', 'system'],
+      enum: ['user', 'question', 'dimension', 'assessment', 'export', 'system', 'class'],
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,

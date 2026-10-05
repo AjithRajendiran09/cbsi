@@ -19,8 +19,8 @@ import Assessment from './pages/Assessment';
 import Results from './pages/Results';
 import Report from './pages/Report';
 
-// Admin & Faculty Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
+import StudentRecords from './pages/admin/StudentRecords';
 import UserManagement from './pages/admin/UserManagement';
 import QuestionManagement from './pages/admin/QuestionManagement';
 import DimensionManagement from './pages/admin/DimensionManagement';
@@ -28,6 +28,8 @@ import AssessmentView from './pages/admin/AssessmentView';
 import Analytics from './pages/admin/Analytics';
 import AuditLog from './pages/admin/AuditLog';
 import ExportData from './pages/admin/ExportData';
+import ClassManagement from './pages/admin/ClassManagement';
+import FacultyDashboard from './pages/faculty/FacultyDashboard';
 
 function App() {
   return (
@@ -83,6 +85,30 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['admin', 'faculty']}>
                       <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/classes"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <ClassManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/faculty"
+                  element={
+                    <ProtectedRoute allowedRoles={['faculty', 'admin']}>
+                      <FacultyDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/students"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin', 'faculty']}>
+                      <StudentRecords />
                     </ProtectedRoute>
                   }
                 />

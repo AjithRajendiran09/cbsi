@@ -103,11 +103,21 @@ const Results = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 rounded-3xl p-8 sm:p-10 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>CBSI Behavioural Profile</span>
+      <div className="bg-gradient-to-r from-blue-900 via-slate-900 to-indigo-950 rounded-3xl p-8 sm:p-10 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none">
+          <img src="/caias-emblem-white.png" alt="CAIAS Crest Watermark" className="w-64 h-64 object-contain" />
+        </div>
+        <div className="space-y-3 max-w-2xl relative z-10">
+          <div className="flex items-center space-x-3">
+            <img
+              src="/caias-logo-white.png"
+              alt="CAIAS"
+              className="h-8 w-auto object-contain opacity-95"
+            />
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>Behavioural Profile</span>
+            </div>
           </div>
           <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight">
             Your CBSI Behavioural Style Profile

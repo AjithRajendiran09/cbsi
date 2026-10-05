@@ -7,16 +7,16 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Col 1: Institute Info */}
-          <div>
-            <div className="flex items-center space-x-2 text-white mb-3">
-              <Compass className="w-5 h-5 text-amber-400" />
-              <span className="font-display font-bold text-base">
-                CBSI Version 1.0 Pilot
-              </span>
+          <div className="space-y-3">
+            <img
+              src="/caias-logo-white.png"
+              alt="CAIAS - Christ Academy Institute for Advanced Studies"
+              className="h-10 w-auto object-contain opacity-95"
+            />
+            <div className="inline-block px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-xs font-bold text-amber-400 uppercase tracking-wider">
+              CBSI Version 1.0 Pilot
             </div>
-            <p className="text-xs leading-relaxed text-slate-400 mb-2">
-              Christ Academy Institute for Advanced Studies (CAIAS)
-              <br />
+            <p className="text-xs leading-relaxed text-slate-400">
               Hullahalli, Begur - Koppa Road, Bengaluru, Karnataka 560083
             </p>
             <p className="text-xs text-slate-500">
@@ -52,7 +52,8 @@ const Footer = () => {
 
         <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
           <p>© {new Date().getFullYear()} Christ Academy Institute for Advanced Studies (CAIAS). All rights reserved.</p>
-          <p className="mt-2 sm:mt-0 flex items-center space-x-1">
+          <p className="mt-2 sm:mt-0 flex items-center space-x-2">
+            <img src="/caias-emblem-white.png" alt="CAIAS Crest" className="h-4 w-auto opacity-70" />
             <span>Built for academic excellence & student development</span>
           </p>
         </div>

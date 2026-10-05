@@ -26,13 +26,19 @@ const Login = () => {
       const user = await login(email, password);
       if (user.role === 'admin') {
         navigate('/admin');
+      } else if (user.role === 'faculty') {
+        navigate('/faculty');
       } else {
-        navigate(from);
+        navigate(from === '/login' || from === '/register' ? '/dashboard' : from);
       }
     } catch (err) {
-      setError(
-        err.response?.data?.message || 'Login failed. Please check your credentials.'
-      );
+      if (!err.response) {
+        setError('Cannot connect to server. Please verify the backend server is running on port 5001.');
+      } else {
+        setError(
+          err.response?.data?.message || 'Login failed. Please check your credentials.'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -41,16 +47,22 @@ const Login = () => {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 bg-blue-900 rounded-2xl flex items-center justify-center text-white mx-auto shadow-md">
-            <Compass className="w-7 h-7 text-amber-300" />
+        <div className="text-center space-y-3">
+          <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
+            <img
+              src="/caias-logo.png"
+              alt="CAIAS - Christ Academy Institute for Advanced Studies"
+              className="h-14 sm:h-16 w-auto object-contain mx-auto"
+            />
+          </Link>
+          <div className="pt-1">
+            <h2 className="font-display text-2xl font-bold text-slate-900">
+              Sign In to CBSI
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Behavioural Style Inventory • Version 1.0 Pilot
+            </p>
           </div>
-          <h2 className="font-display text-2xl font-bold text-slate-900">
-            Sign In to CBSI
-          </h2>
-          <p className="text-xs text-slate-500">
-            Christ Academy Institute for Advanced Studies
-          </p>
         </div>
 
         {sessionExpired && (
@@ -128,10 +140,43 @@ const Login = () => {
         </div>
 
         {/* Demo Credentials Helper */}
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 space-y-1">
-          <p className="font-bold text-slate-700">Demo Admin Credentials:</p>
-          <p>Email: <code className="bg-slate-200 px-1 rounded">admin@caias.in</code></p>
-          <p>Password: <code className="bg-slate-200 px-1 rounded">Admin@123</code></p>
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-3">
+          <p className="font-semibold text-slate-800">Quick-Fill Demo Credentials:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@caias.in');
+                setPassword('Admin@123');
+                setError('');
+              }}
+              className="text-left p-2.5 bg-white rounded-lg border border-slate-200 hover:border-blue-400 hover:shadow-xs transition-all text-xs"
+            >
+              <div className="font-semibold text-blue-700 flex items-center justify-between">
+                <span>Admin</span>
+                <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium">Use</span>
+              </div>
+              <div className="text-[11px] text-slate-500 font-mono mt-0.5">admin@caias.in</div>
+              <div className="text-[11px] text-slate-400 font-mono">Pass: Admin@123</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('student@caias.in');
+                setPassword('Student@123');
+                setError('');
+              }}
+              className="text-left p-2.5 bg-white rounded-lg border border-slate-200 hover:border-emerald-400 hover:shadow-xs transition-all text-xs"
+            >
+              <div className="font-semibold text-emerald-700 flex items-center justify-between">
+                <span>Student</span>
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-medium">Use</span>
+              </div>
+              <div className="text-[11px] text-slate-500 font-mono mt-0.5">student@caias.in</div>
+              <div className="text-[11px] text-slate-400 font-mono">Pass: Student@123</div>
+            </button>
+          </div>
         </div>
       </div>
     </div>

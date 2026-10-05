@@ -11,6 +11,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 import User from '../models/User.js';
 import Dimension from '../models/Dimension.js';
 import Question from '../models/Question.js';
+import ClassSection from '../models/ClassSection.js';
 
 const DIMENSIONS = [
   {
@@ -267,6 +268,119 @@ const seedDatabase = async () => {
       console.log('✅ Created admin user: admin@caias.in / Admin@123');
     } else {
       console.log('ℹ️  Admin user already exists');
+    }
+
+    // Seed demo student user (only if doesn't exist)
+    const existingStudent = await User.findOne({ email: 'student@caias.in' });
+    if (!existingStudent) {
+      await User.create({
+        name: 'Sample Student',
+        email: 'student@caias.in',
+        password: 'Student@123',
+        role: 'participant',
+        department: 'Computer Science',
+        programme: 'BCA',
+        semester: 'IV',
+        section: 'A',
+        registerNumber: 'CAIAS2024001',
+        academicYear: '2025-2026',
+        isActive: true,
+      });
+      console.log('✅ Created demo student: student@caias.in / Student@123');
+    } else {
+      console.log('ℹ️  Demo student user already exists');
+    }
+
+    // Seed demo faculty user
+    let existingFaculty = await User.findOne({ email: 'faculty@caias.in' });
+    if (!existingFaculty) {
+      existingFaculty = await User.create({
+        name: 'Dr. John Mentor',
+        email: 'faculty@caias.in',
+        password: 'Faculty@123',
+        role: 'faculty',
+        department: 'Computer Science',
+        designation: 'Associate Professor & Class Mentor',
+        academicYear: '2025-2026',
+        isActive: true,
+      });
+      console.log('✅ Created demo faculty: faculty@caias.in / Faculty@123');
+    } else {
+      console.log('ℹ️  Demo faculty user already exists');
+    }
+
+    // Seed academic classes with faculty email mapping
+    const sampleClasses = [
+      {
+        className: 'BCA Semester IV - Section A',
+        department: 'Computer Science',
+        programme: 'BCA',
+        semester: 'IV',
+        section: 'A',
+        academicYear: '2025-2026',
+        facultyEmail: 'faculty@caias.in',
+        facultyName: 'Dr. John Mentor',
+        faculty: existingFaculty._id,
+        description: 'BCA Batch 2024-2027 Section A',
+      },
+      {
+        className: 'BCA Semester IV - Section B',
+        department: 'Computer Science',
+        programme: 'BCA',
+        semester: 'IV',
+        section: 'B',
+        academicYear: '2025-2026',
+        facultyEmail: 'faculty@caias.in',
+        facultyName: 'Dr. John Mentor',
+        faculty: existingFaculty._id,
+        description: 'BCA Batch 2024-2027 Section B',
+      },
+      {
+        className: 'B.Com Semester II - Section A',
+        department: 'Commerce',
+        programme: 'B.Com',
+        semester: 'II',
+        section: 'A',
+        academicYear: '2025-2026',
+        facultyEmail: 'prof.commerce@caias.in',
+        facultyName: 'Prof. Anitha Rao',
+        description: 'B.Com Regular Section A',
+      },
+      {
+        className: 'MBA Semester II - Section A',
+        department: 'Management',
+        programme: 'MBA',
+        semester: 'II',
+        section: 'A',
+        academicYear: '2025-2026',
+        facultyEmail: 'mba.faculty@caias.in',
+        facultyName: 'Dr. Rajesh Kumar',
+        description: 'MBA Core Leadership Cohort',
+      },
+    ];
+
+    for (const c of sampleClasses) {
+      const exists = await ClassSection.findOne({
+        programme: c.programme,
+        semester: c.semester,
+        section: c.section,
+        academicYear: c.academicYear,
+      });
+      if (!exists) {
+        const createdClass = await ClassSection.create(c);
+        console.log(`✅ Seeded class: ${c.className} -> mapped to ${c.facultyEmail}`);
+        // Link demo student if matches
+        if (existingStudent) {
+          await User.updateMany(
+            {
+              programme: c.programme,
+              semester: c.semester,
+              section: c.section,
+            },
+            { classSection: createdClass._id }
+          );
+        }
+      }
     }
 
     console.log('\n🎉 Database seeded successfully!\n');

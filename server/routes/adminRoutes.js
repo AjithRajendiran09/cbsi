@@ -2,8 +2,10 @@ import express from 'express';
 import { protect } from '../middleware/auth.js';
 import { authorize } from '../middleware/rbac.js';
 import {
+  getAdminQuestions,
   createQuestion,
   updateQuestion,
+  deleteQuestion,
   toggleQuestionStatus,
   updateDimension,
 } from '../controllers/questionController.js';
@@ -14,6 +16,7 @@ import {
   changeUserRole,
   toggleUserStatus,
   getAllAssessments,
+  getStudentRecords,
   reopenAssessment,
   getAnalytics,
   getAuditLogsHandler,
@@ -29,7 +32,8 @@ router.use(protect);
 // Dashboard
 router.get('/dashboard', authorize('admin', 'faculty'), getDashboard);
 
-// User management
+// Student & User management
+router.get('/students', authorize('admin', 'faculty'), getStudentRecords);
 router.get('/users', authorize('admin'), getUsers);
 router.get('/users/:id', authorize('admin'), idValidation, getUser);
 router.put('/users/:id/role', authorize('admin'), idValidation, changeUserRole);
@@ -40,8 +44,10 @@ router.get('/assessments', authorize('admin', 'faculty'), getAllAssessments);
 router.patch('/assessments/:id/reopen', authorize('admin'), idValidation, reopenAssessment);
 
 // Question management
+router.get('/questions', authorize('admin'), getAdminQuestions);
 router.post('/questions', authorize('admin'), questionValidation, createQuestion);
 router.put('/questions/:id', authorize('admin'), idValidation, updateQuestion);
+router.delete('/questions/:id', authorize('admin'), idValidation, deleteQuestion);
 router.patch('/questions/:id/status', authorize('admin'), idValidation, toggleQuestionStatus);
 
 // Dimension management

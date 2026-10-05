@@ -56,6 +56,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    classSection: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ClassSection',
+    },
+    assignedClasses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ClassSection',
+      },
+    ],
     isActive: {
       type: Boolean,
       default: true,

@@ -197,8 +197,9 @@ npm run seed
 | Role | Email | Password |
 | :--- | :--- | :--- |
 | **Administrator** | `admin@caias.in` | `Admin@123` |
+| **Student (Participant)** | `student@caias.in` | `Student@123` |
 
-*(New student participants and faculty members can register directly through the web interface).*
+*(New student participants and faculty members can also register directly through the web interface).*
 
 ---
 

@@ -37,6 +37,7 @@ export const AUDIT_ACTIONS = {
   QUESTION_CREATED: 'question_created',
   QUESTION_MODIFIED: 'question_modified',
   QUESTION_DEACTIVATED: 'question_deactivated',
+  QUESTION_DELETED: 'question_deleted',
   DIMENSION_MODIFIED: 'dimension_modified',
   USER_CREATED: 'user_created',
   USER_ROLE_CHANGED: 'user_role_changed',
@@ -44,4 +45,7 @@ export const AUDIT_ACTIONS = {
   DATA_EXPORTED: 'data_exported',
   LOGIN: 'login',
   LOGIN_FAILED: 'login_failed',
+  CLASS_CREATED: 'class_created',
+  CLASS_UPDATED: 'class_updated',
+  CLASS_DELETED: 'class_deleted',
 };

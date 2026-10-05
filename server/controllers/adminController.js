@@ -1,5 +1,7 @@
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Assessment from '../models/Assessment.js';
+import ClassSection from '../models/ClassSection.js';
 import { asyncHandler, AppError } from '../utils/helpers.js';
 import { createAuditLog } from '../services/auditService.js';
 import { calculateAnalytics, getDashboardStats } from '../services/analyticsService.js';
@@ -259,3 +261,162 @@ export const getAuditLogsHandler = asyncHandler(async (req, res) => {
     data: result,
   });
 });
+
+/**
+ * @route   GET /api/admin/students
+ * @desc    Get all students with their detailed marks and dimension scores
+ * @access  Admin, Faculty
+ */
+export const getStudentRecords = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const search = (req.query.search || '').trim();
+  const department = req.query.department;
+  const programme = req.query.programme;
+  const semester = req.query.semester;
+  const section = req.query.section;
+  const classId = req.query.classId;
+  const status = req.query.status;
+
+  const match = { role: 'participant' };
+
+  // If requester is faculty, restrict students to their assigned classes/sections
+  if (req.user && req.user.role === 'faculty') {
+    const assignedClasses = await ClassSection.find({
+      $or: [
+        { facultyEmail: req.user.email.toLowerCase() },
+        { faculty: req.user._id },
+      ],
+    });
+
+    if (assignedClasses.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          students: [],
+          total: 0,
+          page: 1,
+          pages: 1,
+          stats: {
+            totalStudents: 0,
+            completedAssessments: 0,
+            inProgressAssessments: 0,
+            notStartedAssessments: 0,
+            avgScore: 0,
+            avgPercentage: 0,
+          },
+        },
+      });
+    }
+
+    const assignedIds = assignedClasses.map((c) => c._id);
+    match.$and = match.$and || [];
+    match.$and.push({
+      $or: [
+        { classSection: { $in: assignedIds } },
+        ...assignedClasses.map((c) => ({
+          programme: c.programme,
+          semester: c.semester,
+          section: c.section,
+        })),
+      ],
+    });
+  } else if (classId) {
+    match.classSection = new mongoose.Types.ObjectId(classId);
+  }
+
+  if (search) {
+    match.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { registerNumber: { $regex: search, $options: 'i' } },
+    ];
+  }
+  if (department) match.department = department;
+  if (programme) match.programme = programme;
+  if (semester) match.semester = semester;
+  if (section) match.section = section.toUpperCase();
+
+  const pipeline = [
+    { $match: match },
+    {
+      $lookup: {
+        from: 'assessments',
+        let: { userId: '$_id' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$user', '$$userId'] } } },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 },
+        ],
+        as: 'assessmentArr',
+      },
+    },
+    {
+      $addFields: {
+        assessment: { $arrayElemAt: ['$assessmentArr', 0] },
+      },
+    },
+    {
+      $project: {
+        assessmentArr: 0,
+        password: 0,
+      },
+    },
+  ];
+
+  if (status === 'completed') {
+    pipeline.push({ $match: { 'assessment.completed': true } });
+  } else if (status === 'in_progress') {
+    pipeline.push({
+      $match: {
+        assessment: { $ne: null },
+        'assessment.completed': false,
+      },
+    });
+  } else if (status === 'not_started') {
+    pipeline.push({ $match: { assessment: null } });
+  }
+
+  // Calculate stats for all students in match criteria (without pagination)
+  const countPipeline = [...pipeline, { $count: 'total' }];
+  const countResult = await User.aggregate(countPipeline);
+  const total = countResult[0]?.total || 0;
+
+  // Add sorting and pagination
+  pipeline.push({ $sort: { createdAt: -1 } });
+  pipeline.push({ $skip: (page - 1) * limit });
+  pipeline.push({ $limit: limit });
+
+  const students = await User.aggregate(pipeline);
+
+  // Overall statistics for students
+  const totalAllStudents = await User.countDocuments({ role: 'participant' });
+  const completedAssessments = await Assessment.countDocuments({ completed: true });
+  const inProgressAssessments = await Assessment.countDocuments({ completed: false });
+  
+  // Calculate average score for completed
+  const avgResult = await Assessment.aggregate([
+    { $match: { completed: true } },
+    { $group: { _id: null, avgScore: { $avg: '$totalScore' } } },
+  ]);
+  const avgScore = avgResult.length > 0 ? Math.round(avgResult[0].avgScore * 10) / 10 : 0;
+
+  res.json({
+    success: true,
+    data: {
+      students,
+      total,
+      page,
+      pages: Math.ceil(total / limit) || 1,
+      stats: {
+        totalStudents: totalAllStudents,
+        completedAssessments,
+        inProgressAssessments,
+        notStartedAssessments: Math.max(0, totalAllStudents - completedAssessments - inProgressAssessments),
+        avgScore,
+        avgPercentage: Math.round((avgScore / 120) * 100),
+      },
+    },
+  });
+});
+

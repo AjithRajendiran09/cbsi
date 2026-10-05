@@ -12,6 +12,7 @@ import authRoutes from './routes/authRoutes.js';
 import assessmentRoutes from './routes/assessmentRoutes.js';
 import questionRoutes from './routes/questionRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import classRoutes from './routes/classRoutes.js';
 
 // Load env variables
 dotenv.config();
@@ -23,10 +24,31 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(new Error('Blocked by CORS'));
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(mongoSanitize());
@@ -41,6 +63,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api', questionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/classes', classRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   GraduationCap,
+  School,
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -32,15 +33,17 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-900 to-blue-600 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
-              <Compass className="w-6 h-6 text-amber-300" />
-            </div>
-            <div>
-              <span className="font-display font-bold text-lg text-slate-900 tracking-tight block leading-tight">
-                CBSI <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 uppercase tracking-wider ml-1">v1.0 Pilot</span>
+            <img
+              src="/caias-logo.png"
+              alt="CAIAS - Christ Academy Institute for Advanced Studies"
+              className="h-10 w-auto object-contain group-hover:scale-105 transition-transform"
+            />
+            <div className="hidden sm:block border-l border-slate-300 pl-3">
+              <span className="font-display font-bold text-sm text-slate-900 tracking-tight block leading-tight">
+                CBSI <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 uppercase tracking-wider ml-1">v1.0 Pilot</span>
               </span>
-              <span className="text-xs text-slate-500 font-medium tracking-wide">
-                Christ Academy Institute for Advanced Studies
+              <span className="text-[11px] text-slate-500 font-medium tracking-tight block">
+                Behavioural Style Inventory
               </span>
             </div>
           </Link>
@@ -60,43 +63,78 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <>
-                <Link
-                  to="/dashboard"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive('/dashboard')
-                      ? 'text-blue-700 bg-blue-50'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <span className="flex items-center space-x-1.5">
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>My Dashboard</span>
-                  </span>
-                </Link>
+                {!isAdmin && !isFaculty && (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive('/dashboard')
+                          ? 'text-blue-700 bg-blue-50'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="flex items-center space-x-1.5">
+                        <LayoutDashboard className="w-4 h-4" />
+                        <span>My Dashboard</span>
+                      </span>
+                    </Link>
 
-                <Link
-                  to="/assessment"
-                  className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                    isActive('/assessment')
-                      ? 'bg-blue-700 text-white shadow-sm'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
-                  }`}
-                >
-                  Take Assessment
-                </Link>
+                    <Link
+                      to="/assessment"
+                      className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                        isActive('/assessment')
+                          ? 'bg-blue-700 text-white shadow-sm'
+                          : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                      }`}
+                    >
+                      Take Assessment
+                    </Link>
+                  </>
+                )}
 
-                {(isAdmin || isFaculty) && (
+                {isAdmin && (
+                  <>
+                    <Link
+                      to="/admin/classes"
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive('/admin/classes')
+                          ? 'text-indigo-700 bg-indigo-50 font-semibold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="flex items-center space-x-1.5">
+                        <School className="w-4 h-4 text-indigo-600" />
+                        <span>Classes & Mapping</span>
+                      </span>
+                    </Link>
+                    <Link
+                      to="/admin"
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/admin'
+                          ? 'text-amber-700 bg-amber-50 font-semibold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="flex items-center space-x-1.5">
+                        <Shield className="w-4 h-4 text-amber-600" />
+                        <span>Admin Console</span>
+                      </span>
+                    </Link>
+                  </>
+                )}
+
+                {isFaculty && (
                   <Link
-                    to="/admin"
+                    to="/faculty"
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname.startsWith('/admin')
-                        ? 'text-amber-700 bg-amber-50'
+                      location.pathname === '/faculty' || location.pathname.startsWith('/admin')
+                        ? 'text-indigo-700 bg-indigo-50 font-semibold'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     <span className="flex items-center space-x-1.5">
-                      <Shield className="w-4 h-4 text-amber-600" />
-                      <span>{isAdmin ? 'Admin Console' : 'Faculty Research'}</span>
+                      <School className="w-4 h-4 text-indigo-600" />
+                      <span>Faculty Console</span>
                     </span>
                   </Link>
                 )}
@@ -165,27 +203,49 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <>
-              <Link
-                to="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
-              >
-                My Dashboard
-              </Link>
-              <Link
-                to="/assessment"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-md text-base font-medium text-blue-700 bg-blue-50"
-              >
-                Take Assessment
-              </Link>
-              {(isAdmin || isFaculty) && (
+              {!isAdmin && !isFaculty && (
+                <>
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    My Dashboard
+                  </Link>
+                  <Link
+                    to="/assessment"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-blue-700 bg-blue-50"
+                  >
+                    Take Assessment
+                  </Link>
+                </>
+              )}
+              {isAdmin && (
+                <>
+                  <Link
+                    to="/admin/classes"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-indigo-700 bg-indigo-50"
+                  >
+                    Classes & Faculty Mapping
+                  </Link>
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-amber-700 bg-amber-50"
+                  >
+                    Admin Console
+                  </Link>
+                </>
+              )}
+              {isFaculty && (
                 <Link
-                  to="/admin"
+                  to="/faculty"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-amber-700 bg-amber-50"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-indigo-700 bg-indigo-50"
                 >
-                  {isAdmin ? 'Admin Console' : 'Faculty Research'}
+                  Faculty Console
                 </Link>
               )}
               <div className="pt-2 border-t border-slate-200 flex items-center justify-between">

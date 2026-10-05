@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import {
@@ -18,9 +18,18 @@ import { DIMENSIONS, INTERPRETATIONS } from '../utils/constants';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user?.role === 'faculty') {
+      navigate('/faculty', { replace: true });
+    } else if (user?.role === 'admin') {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, navigate]);
 
   const fetchAssessments = async () => {
     try {
@@ -47,12 +56,19 @@ const Dashboard = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 rounded-3xl p-8 sm:p-10 text-white shadow-md relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
-          <Compass className="w-80 h-80 text-white" />
+        <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
+          <img src="/caias-emblem-white.png" alt="CAIAS Crest Watermark" className="w-72 h-72 object-contain" />
         </div>
-        <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur text-xs font-semibold text-amber-300">
-            <span>CAIAS Student & Faculty Assessment Portal</span>
+        <div className="relative z-10 max-w-2xl space-y-4">
+          <div className="flex items-center space-x-3">
+            <img
+              src="/caias-logo-white.png"
+              alt="CAIAS"
+              className="h-9 w-auto object-contain opacity-95"
+            />
+            <div className="hidden sm:inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur text-xs font-semibold text-amber-300">
+              <span>Student & Faculty Portal</span>
+            </div>
           </div>
           <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight">
             Welcome, {user?.name}

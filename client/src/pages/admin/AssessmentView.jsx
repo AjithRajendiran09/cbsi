@@ -105,20 +105,27 @@ const AssessmentView = () => {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <Link
-            to="/admin"
-            className="inline-flex items-center space-x-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-1"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Console</span>
-          </Link>
-          <h1 className="font-display text-2xl font-bold text-slate-900">
-            Participant Assessment Record
-          </h1>
-          <p className="text-xs text-slate-500">
-            ID: {assessment._id} • Inventory Version {inventoryVersion}
-          </p>
+        <div className="flex items-start space-x-4">
+          <img
+            src="/caias-logo.png"
+            alt="CAIAS"
+            className="h-11 w-auto object-contain mt-1 hidden sm:block"
+          />
+          <div>
+            <Link
+              to="/admin"
+              className="inline-flex items-center space-x-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 mb-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Console</span>
+            </Link>
+            <h1 className="font-display text-2xl font-bold text-slate-900">
+              Participant Assessment Record
+            </h1>
+            <p className="text-xs text-slate-500">
+              ID: {assessment._id} • Inventory Version {inventoryVersion}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

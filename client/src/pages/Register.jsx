@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import {
   Compass,
   AlertCircle,
@@ -11,6 +12,8 @@ import {
   Building,
   GraduationCap,
   Briefcase,
+  Sparkles,
+  School,
 } from 'lucide-react';
 import { DEPARTMENTS, PROGRAMMES, SEMESTERS } from '../utils/constants';
 
@@ -23,18 +26,49 @@ const Register = () => {
     role: 'participant',
     department: 'Computer Science',
     programme: 'BCA',
-    semester: 'V',
+    semester: 'IV',
     section: 'A',
     registerNumber: '',
     designation: '',
     academicYear: '2025-2026',
   });
 
+  const [availableClasses, setAvailableClasses] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await api.get('/classes/public');
+        setAvailableClasses(res.data.data.classes || []);
+      } catch (err) {
+        console.error('Failed to load classes:', err);
+      }
+    };
+    fetchClasses();
+  }, []);
+
+  const handleClassSelect = (classId) => {
+    setSelectedClassId(classId);
+    if (!classId) return;
+
+    const found = availableClasses.find((c) => c._id === classId);
+    if (found) {
+      setFormData((prev) => ({
+        ...prev,
+        department: found.department,
+        programme: found.programme,
+        semester: found.semester,
+        section: found.section,
+        academicYear: found.academicYear || prev.academicYear,
+      }));
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,7 +90,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await register({
+      const registeredUser = await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -64,13 +98,20 @@ const Register = () => {
         department: formData.department,
         programme: formData.role === 'faculty' ? 'Faculty / Staff' : formData.programme,
         semester: formData.role === 'faculty' ? 'N/A' : formData.semester,
-        section: formData.section,
+        section: formData.role === 'faculty' ? 'N/A' : formData.section,
         registerNumber: formData.registerNumber,
         designation: formData.designation,
         academicYear: formData.academicYear,
+        classSection: selectedClassId || undefined,
       });
 
-      navigate('/dashboard');
+      if (registeredUser.role === 'faculty') {
+        navigate('/faculty');
+      } else if (registeredUser.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(
         err.response?.data?.message || 'Registration failed. Please try again.'
@@ -83,16 +124,22 @@ const Register = () => {
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="max-w-xl w-full bg-white p-8 sm:p-10 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 bg-blue-900 rounded-2xl flex items-center justify-center text-white mx-auto shadow-md">
-            <Compass className="w-7 h-7 text-amber-300" />
+        <div className="text-center space-y-3">
+          <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
+            <img
+              src="/caias-logo.png"
+              alt="CAIAS - Christ Academy Institute for Advanced Studies"
+              className="h-14 sm:h-16 w-auto object-contain mx-auto"
+            />
+          </Link>
+          <div className="pt-1">
+            <h2 className="font-display text-2xl font-bold text-slate-900">
+              Participant Registration
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              CAIAS Behavioural Style Inventory – Version 1.0 Pilot
+            </p>
           </div>
-          <h2 className="font-display text-2xl font-bold text-slate-900">
-            Participant Registration
-          </h2>
-          <p className="text-xs text-slate-500">
-            CAIAS Behavioural Style Inventory – Version 1.0 Pilot
-          </p>
         </div>
 
         {error && (
@@ -128,6 +175,58 @@ const Register = () => {
               Faculty / Researcher
             </button>
           </div>
+
+          {/* Automatic Class Mapping Banner for Faculty */}
+          {formData.role === 'faculty' && (
+            <div className="p-3.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-1.5 text-xs text-amber-900">
+              <div className="flex items-center space-x-1.5 font-bold text-amber-900">
+                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Automatic Class & Section Mapping Enabled</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-amber-800">
+                Please register using your institutional faculty email (e.g. <code>faculty@caias.in</code>). Once registered, your account will be <strong>automatically mapped</strong> to your assigned classes, section student cohorts, and mark sheets.
+              </p>
+            </div>
+          )}
+
+          {/* Enrolled Class & Section Selector for Students */}
+          {formData.role === 'participant' && availableClasses.length > 0 && (
+            <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-blue-950 uppercase tracking-wider flex items-center space-x-1.5">
+                  <School className="w-3.5 h-3.5 text-blue-700" />
+                  <span>Choose Your Class & Section</span>
+                </label>
+                <span className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                  Admin Configured
+                </span>
+              </div>
+              <select
+                value={selectedClassId}
+                onChange={(e) => handleClassSelect(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-blue-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="">-- Select your class (or fill manually below) --</option>
+                {availableClasses.map((cls) => (
+                  <option key={cls._id} value={cls._id}>
+                    {cls.className} ({cls.programme} Sem {cls.semester} Sec {cls.section}) {cls.facultyName ? `• Faculty: ${cls.facultyName}` : ''}
+                  </option>
+                ))}
+              </select>
+              {selectedClassId && (
+                <div className="pt-1 text-[11px] text-blue-800 flex items-center justify-between">
+                  <span>
+                    Enrolled into <strong>{availableClasses.find((c) => c._id === selectedClassId)?.className}</strong>
+                  </span>
+                  {availableClasses.find((c) => c._id === selectedClassId)?.facultyName && (
+                    <span className="text-slate-600">
+                      Class Faculty: <strong>{availableClasses.find((c) => c._id === selectedClassId)?.facultyName}</strong>
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Name & Email */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

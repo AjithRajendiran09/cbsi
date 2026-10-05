@@ -177,17 +177,24 @@ const Assessment = () => {
          ========================================================================= */}
       {currentStep === 1 && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-10 space-y-8">
-          <div className="border-b border-slate-100 pb-6 space-y-2">
-            <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
-              Step 1: Introduction & Guidance
-            </span>
-            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
-              CAIAS Behavioural Style Inventory (CBSI) – Version 1.0
-            </h1>
-            <p className="text-sm text-slate-600 leading-relaxed max-w-3xl">
-              Welcome to the CBSI assessment. This inventory is designed to assist you in understanding
-              your natural behavioural tendencies in academic, team, and professional settings.
-            </p>
+          <div className="border-b border-slate-100 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
+                Step 1: Introduction & Guidance
+              </span>
+              <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
+                CAIAS Behavioural Style Inventory (CBSI)
+              </h1>
+              <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
+                Welcome to the CBSI assessment. This inventory is designed to assist you in understanding
+                your natural behavioural tendencies in academic, team, and professional settings.
+              </p>
+            </div>
+            <img
+              src="/caias-logo.png"
+              alt="CAIAS"
+              className="h-12 w-auto object-contain hidden sm:block shrink-0"
+            />
           </div>
 
           {/* Key Guidelines */}
@@ -475,7 +482,7 @@ const Assessment = () => {
 
           {/* Dimension Tabs */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {DIMENSIONS.map((dim) => {
+            {DIMENSIONS.map((dim, idx) => {
               const count = getDimensionAnsweredCount(dim.code);
               const isActive = activeDimCode === dim.code;
               const isDimComplete = count === 8;
@@ -491,7 +498,7 @@ const Assessment = () => {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-xs text-slate-900">{dim.code}</span>
+                    <span className="font-bold text-xs text-slate-900">Section {idx + 1}</span>
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
                         isDimComplete
@@ -502,25 +509,25 @@ const Assessment = () => {
                       {count}/8
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-600 font-medium truncate">{dim.name}</p>
+                  <p className="text-[11px] text-slate-600 font-medium truncate">{count === 8 ? '✓ Complete' : `${8 - count} remaining`}</p>
                 </button>
               );
             })}
           </div>
 
-          {/* Current Dimension Header */}
+          {/* Current Section Header */}
           {DIMENSIONS.find((d) => d.code === activeDimCode) && (
             <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-1">
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                  Dimension {DIMENSIONS.findIndex((d) => d.code === activeDimCode) + 1} of 5
+                  Section {DIMENSIONS.findIndex((d) => d.code === activeDimCode) + 1} of 5
                 </span>
               </div>
               <h2 className="font-display font-bold text-xl text-white">
-                {DIMENSIONS.find((d) => d.code === activeDimCode).name} ({activeDimCode})
+                Behavioural Statements
               </h2>
               <p className="text-xs text-slate-300">
-                {DIMENSIONS.find((d) => d.code === activeDimCode).description}
+                Read each statement carefully and select the option that best reflects how you typically behave.
               </p>
             </div>
           )}
@@ -545,9 +552,6 @@ const Assessment = () => {
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-bold text-blue-700">
                           Statement {q.statementNumber} of 40
-                        </span>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                          {q.dimensionCode}
                         </span>
                       </div>
                       <p className="text-sm font-semibold text-slate-900 leading-snug">
@@ -682,9 +686,9 @@ const Assessment = () => {
             </div>
           )}
 
-          {/* Dimension completion grid */}
+          {/* Section completion grid */}
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {DIMENSIONS.map((dim) => {
+            {DIMENSIONS.map((dim, idx) => {
               const count = getDimensionAnsweredCount(dim.code);
               const done = count === 8;
               return (
@@ -696,7 +700,7 @@ const Assessment = () => {
                       : 'bg-amber-50/50 border-amber-200'
                   }`}
                 >
-                  <p className="text-xs font-bold text-slate-800">{dim.name}</p>
+                  <p className="text-xs font-bold text-slate-800">Section {idx + 1}</p>
                   <p className="text-xs font-extrabold text-blue-700">{count}/8 Answered</p>
                   <span
                     className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded ${

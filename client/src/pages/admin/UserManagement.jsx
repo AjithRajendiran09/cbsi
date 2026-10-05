@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   Mail,
   Building,
+  GraduationCap,
 } from 'lucide-react';
 import { DEPARTMENTS } from '../../utils/constants';
 
@@ -99,6 +100,16 @@ const UserManagement = () => {
           <p className="text-xs text-slate-500">
             View, search, and manage registered participants across CAIAS departments
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            to="/admin/students"
+            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors"
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span>View Student Marks & Scores</span>
+          </Link>
         </div>
       </div>
 
