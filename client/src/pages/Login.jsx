@@ -32,13 +32,18 @@ const Login = () => {
         navigate(from === '/login' || from === '/register' ? '/dashboard' : from);
       }
     } catch (err) {
-      if (!err.response) {
-        setError('Cannot connect to server. Please verify the backend server is running on port 5001.');
-      } else {
-        setError(
-          err.response?.data?.message || 'Login failed. Please check your credentials.'
-        );
+      console.error('Login error:', err);
+      let msg = err.response?.data?.message || err.message || '';
+
+      if (!msg || msg === 'Failed to fetch' || err.code === 'ERR_NETWORK') {
+        msg = 'Cannot connect to server. Please verify your internet connection or check that the backend is running.';
+      } else if (msg.toLowerCase().includes('invalid login credentials')) {
+        msg = 'Invalid email or password. If you have not created your account yet, click "Register for CBSI" below.';
+      } else if (msg.toLowerCase().includes('email not confirmed')) {
+        msg = 'Email address not confirmed. Please verify your email or disable confirmation in Supabase Auth settings.';
       }
+
+      setError(msg);
     } finally {
       setLoading(false);
     }

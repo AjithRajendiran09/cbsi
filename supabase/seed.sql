@@ -82,3 +82,72 @@ ON CONFLICT (programme, semester, section, academic_year) DO UPDATE SET
   faculty_email = EXCLUDED.faculty_email,
   faculty_name = EXCLUDED.faculty_name,
   description = EXCLUDED.description;
+
+-- 4. Insert Demo Accounts into auth.users & Trigger Profiles
+-- Admin: admin@caias.in / Admin@123
+-- Faculty: faculty@caias.in / Faculty@123
+-- Student: student@caias.in / Student@123
+INSERT INTO auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at,
+  confirmation_token,
+  recovery_token
+) VALUES
+(
+  '00000000-0000-0000-0000-000000000000',
+  'a0000000-0000-0000-0000-000000000001',
+  'authenticated',
+  'authenticated',
+  'admin@caias.in',
+  crypt('Admin@123', gen_salt('bf')),
+  NOW(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"name":"Admin Administrator","role":"admin","department":"Administration"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+),
+(
+  '00000000-0000-0000-0000-000000000000',
+  'a0000000-0000-0000-0000-000000000002',
+  'authenticated',
+  'authenticated',
+  'faculty@caias.in',
+  crypt('Faculty@123', gen_salt('bf')),
+  NOW(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"name":"Dr. John Mentor","role":"faculty","department":"Computer Science","designation":"Associate Professor & Class Mentor"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+),
+(
+  '00000000-0000-0000-0000-000000000000',
+  'a0000000-0000-0000-0000-000000000003',
+  'authenticated',
+  'authenticated',
+  'student@caias.in',
+  crypt('Student@123', gen_salt('bf')),
+  NOW(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"name":"Sample Student","role":"participant","department":"Computer Science","programme":"BCA","semester":"IV","section":"A","registerNumber":"CAIAS2024001"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+)
+ON CONFLICT (id) DO UPDATE SET
+  encrypted_password = EXCLUDED.encrypted_password,
+  email_confirmed_at = EXCLUDED.email_confirmed_at;
+
