@@ -220,6 +220,25 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ==============================================================================
+-- SECURITY DEFINER HELPER FUNCTIONS (Prevent Infinite Recursion in RLS)
+-- ==============================================================================
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.is_admin_or_faculty()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('admin', 'faculty')
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- ==============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ==============================================================================
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -231,46 +250,40 @@ ALTER TABLE assessment_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assessment_dimension_scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Dimensions & Questions: Readable by everyone
+-- 1. Dimensions & Questions: Readable by everyone (including registration)
 CREATE POLICY "Public read dimensions" ON dimensions FOR SELECT USING (true);
 CREATE POLICY "Public read questions" ON questions FOR SELECT USING (is_active = true);
 
--- Class Sections: Readable by all authenticated users
-CREATE POLICY "Auth read class_sections" ON class_sections FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Admin write class_sections" ON class_sections FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
+-- 2. Class Sections: Publicly readable for student registration dropdown!
+CREATE POLICY "Public read class_sections" ON class_sections FOR SELECT USING (is_active = true);
+CREATE POLICY "Admin write class_sections" ON class_sections FOR ALL USING (public.is_admin());
 
--- Profiles: Users can view own profile or admins/faculty can view students
+-- 3. Profiles: User reads own profile; Admin & Faculty read student profiles
 CREATE POLICY "Users read profiles" ON profiles FOR SELECT USING (
   id = auth.uid()
-  OR EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'faculty'))
+  OR public.is_admin_or_faculty()
 );
 CREATE POLICY "Users update own profile" ON profiles FOR UPDATE USING (id = auth.uid());
-CREATE POLICY "Admin full manage profiles" ON profiles FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
+CREATE POLICY "Admin full manage profiles" ON profiles FOR ALL USING (public.is_admin());
 
--- Assessments: Student reads/writes own; Faculty reads assigned class assessments; Admin reads all
+-- 4. Assessments: Student reads/writes own; Faculty reads assigned class; Admin reads all
 CREATE POLICY "Student read own assessments" ON assessments FOR SELECT USING (
   user_id = auth.uid()
   OR EXISTS (
     SELECT 1 FROM class_sections cs
     WHERE cs.id = assessments.class_section_id AND cs.faculty_id = auth.uid()
   )
-  OR EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+  OR public.is_admin()
 );
 CREATE POLICY "Student insert own assessments" ON assessments FOR INSERT WITH CHECK (user_id = auth.uid());
 CREATE POLICY "Student update own assessments" ON assessments FOR UPDATE USING (user_id = auth.uid());
-CREATE POLICY "Admin manage assessments" ON assessments FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
+CREATE POLICY "Admin manage assessments" ON assessments FOR ALL USING (public.is_admin());
 
--- Assessment details:
+-- 5. Assessment Responses & Dimension Scores
 CREATE POLICY "Read assessment responses" ON assessment_responses FOR SELECT USING (
   EXISTS (SELECT 1 FROM assessments a WHERE a.id = assessment_responses.assessment_id AND (
     a.user_id = auth.uid()
-    OR EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'faculty'))
+    OR public.is_admin_or_faculty()
   ))
 );
 CREATE POLICY "Insert assessment responses" ON assessment_responses FOR INSERT WITH CHECK (
@@ -280,15 +293,14 @@ CREATE POLICY "Insert assessment responses" ON assessment_responses FOR INSERT W
 CREATE POLICY "Read dimension scores" ON assessment_dimension_scores FOR SELECT USING (
   EXISTS (SELECT 1 FROM assessments a WHERE a.id = assessment_dimension_scores.assessment_id AND (
     a.user_id = auth.uid()
-    OR EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'faculty'))
+    OR public.is_admin_or_faculty()
   ))
 );
 CREATE POLICY "Insert dimension scores" ON assessment_dimension_scores FOR INSERT WITH CHECK (
   EXISTS (SELECT 1 FROM assessments a WHERE a.id = assessment_dimension_scores.assessment_id AND a.user_id = auth.uid())
 );
 
--- Audit logs: Read by admin, insert by all authenticated
-CREATE POLICY "Admin view audit logs" ON audit_logs FOR SELECT USING (
-  EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
-);
+-- 6. Audit Logs: Admin views; Authenticated inserts
+CREATE POLICY "Admin view audit logs" ON audit_logs FOR SELECT USING (public.is_admin());
 CREATE POLICY "Auth insert audit logs" ON audit_logs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
