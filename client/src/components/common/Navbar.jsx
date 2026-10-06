@@ -145,10 +145,16 @@ const Navbar = () => {
                 <div className="flex items-center space-x-3 pl-2">
                   <div className="text-right">
                     <p className="text-xs font-semibold text-slate-900 leading-tight">
-                      {user?.name}
+                      {user?.name || (isAdmin ? 'Administrator' : isFaculty ? 'Faculty Member' : 'Student')}
                     </p>
-                    <span className="inline-block text-[10px] font-medium uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
-                      {user?.role}
+                    <span className={`inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                      isAdmin
+                        ? 'bg-amber-100 text-amber-800'
+                        : isFaculty
+                        ? 'bg-indigo-100 text-indigo-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {isAdmin ? 'Administrator' : isFaculty ? 'Faculty' : 'Student'}
                     </span>
                   </div>
                   <button

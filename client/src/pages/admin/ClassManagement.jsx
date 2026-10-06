@@ -180,6 +180,11 @@ const ClassManagement = () => {
     setRosterModalOpen(true);
     setRosterLoading(true);
     try {
+      if (isSupabaseConfigured) {
+        const studentList = await supabaseClasses.getClassStudents(cls._id || cls.id);
+        setRosterStudents(studentList || []);
+        return;
+      }
       const res = await api.get(`/classes/${cls._id}/students`);
       setRosterStudents(res.data.data.students || []);
     } catch (err) {

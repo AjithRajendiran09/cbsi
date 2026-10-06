@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { isSupabaseConfigured, supabaseFaculty } from '../../services/supabase';
 import {
   School,
   Users,
@@ -40,6 +41,15 @@ const FacultyDashboard = () => {
   const loadFacultyData = async () => {
     try {
       setLoading(true);
+      if (isSupabaseConfigured) {
+        const dashData = await supabaseFaculty.getDashboard(user?._id || user?.id, user?.email);
+        if (dashData) {
+          setData(dashData);
+          setStudents(dashData.students || []);
+          return;
+        }
+      }
+
       const [dashRes, studentsRes] = await Promise.all([
         api.get('/classes/faculty/dashboard'),
         api.get('/admin/students', { params: { limit: 100 } }),

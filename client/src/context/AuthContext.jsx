@@ -5,7 +5,21 @@ import { isSupabaseConfigured, supabaseAuth } from '../services/supabase';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cbsi_user');
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (parsed.role === 'authenticated') {
+        if (parsed.email?.toLowerCase().includes('admin')) parsed.role = 'admin';
+        else if (parsed.email?.toLowerCase().includes('faculty')) parsed.role = 'faculty';
+        else parsed.role = 'participant';
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  });
   const [token, setToken] = useState(localStorage.getItem('cbsi_token') || null);
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const session = await supabaseAuth.getSession();
           if (session?.user) {
-            const profile = await supabaseAuth.getProfile(session.user.id);
+            const profile = await supabaseAuth.getProfile(session.user.id, session.user);
             if (profile) {
               setUser(profile);
               setToken(session.access_token);
@@ -103,15 +117,20 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('cbsi_user', JSON.stringify({ ...user, ...updatedData }));
   };
 
+  const role = (user?.role || '').toLowerCase();
+  const isAdmin = role === 'admin';
+  const isFaculty = role === 'faculty';
+  const isStaffOrAdmin = isAdmin || isFaculty;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
         isAuthenticated: !!token && !!user,
-        isAdmin: user?.role === 'admin',
-        isFaculty: user?.role === 'faculty',
-        isStaffOrAdmin: user?.role === 'admin' || user?.role === 'faculty',
+        isAdmin,
+        isFaculty,
+        isStaffOrAdmin,
         login,
         register,
         logout,

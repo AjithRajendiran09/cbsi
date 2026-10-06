@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { isSupabaseConfigured, supabaseAdmin, supabaseClasses } from '../../services/supabase';
 import {
   Users,
   Search,
@@ -48,6 +49,11 @@ const StudentRecords = () => {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
+        if (isSupabaseConfigured) {
+          const list = await supabaseClasses.getPublicClasses();
+          setClassList(list || []);
+          return;
+        }
         const res = await api.get('/classes/public');
         if (res.data?.success) {
           setClassList(res.data.data.classes || res.data.data || []);
@@ -62,6 +68,54 @@ const StudentRecords = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
+      if (isSupabaseConfigured) {
+        let allStudents = await supabaseAdmin.getStudentRecords();
+        if (search.trim()) {
+          const q = search.toLowerCase();
+          allStudents = allStudents.filter(s =>
+            (s.name || '').toLowerCase().includes(q) ||
+            (s.email || '').toLowerCase().includes(q) ||
+            (s.registerNumber || '').toLowerCase().includes(q)
+          );
+        }
+        if (departmentFilter) {
+          allStudents = allStudents.filter(s => s.department === departmentFilter);
+        }
+        if (programmeFilter) {
+          allStudents = allStudents.filter(s => s.programme === programmeFilter);
+        }
+        if (statusFilter) {
+          if (statusFilter === 'completed') {
+            allStudents = allStudents.filter(s => s.assessment?.completed);
+          } else if (statusFilter === 'in_progress') {
+            allStudents = allStudents.filter(s => s.assessment && !s.assessment.completed);
+          } else if (statusFilter === 'not_started') {
+            allStudents = allStudents.filter(s => !s.assessment);
+          }
+        }
+        if (classFilter) {
+          allStudents = allStudents.filter(s => s.classSection?.id === classFilter || s.classSection?._id === classFilter);
+        }
+        if (sectionFilter) {
+          allStudents = allStudents.filter(s => s.section === sectionFilter);
+        }
+
+        const completedCount = allStudents.filter(s => s.assessment?.completed).length;
+        const total = allStudents.length;
+        setStats({
+          total,
+          completed: completedCount,
+          inProgress: allStudents.filter(s => s.assessment && !s.assessment.completed).length,
+          notStarted: allStudents.filter(s => !s.assessment).length,
+          completionRate: total > 0 ? Math.round((completedCount / total) * 100) : 0,
+        });
+
+        setTotalPages(Math.ceil(total / 15) || 1);
+        const startIndex = (page - 1) * 15;
+        setStudents(allStudents.slice(startIndex, startIndex + 15));
+        return;
+      }
+
       const params = { page, limit: 15 };
       if (search.trim()) params.search = search.trim();
       if (departmentFilter) params.department = departmentFilter;
@@ -99,6 +153,14 @@ const StudentRecords = () => {
     }
     try {
       setActionLoading(true);
+      if (isSupabaseConfigured) {
+        await supabaseAdmin.reopenAssessment(assessmentId);
+        alert('Assessment successfully reopened.');
+        if (selectedStudent) setSelectedStudent(null);
+        fetchStudents();
+        return;
+      }
+
       await api.patch(`/admin/assessments/${assessmentId}/reopen`);
       alert('Assessment successfully reopened.');
       if (selectedStudent) setSelectedStudent(null);

@@ -23,10 +23,11 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const user = await login(email, password);
-      if (user.role === 'admin') {
+      const loggedUser = await login(email, password);
+      const role = (loggedUser?.role || '').toLowerCase();
+      if (role === 'admin') {
         navigate('/admin');
-      } else if (user.role === 'faculty') {
+      } else if (role === 'faculty') {
         navigate('/faculty');
       } else {
         navigate(from === '/login' || from === '/register' ? '/dashboard' : from);

@@ -21,7 +21,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+  const userRole = (user?.role || '').toLowerCase();
+  const normalizedAllowed = allowedRoles.map(r => r.toLowerCase());
+  if (allowedRoles.length > 0 && !normalizedAllowed.includes(userRole)) {
     return (
       <div className="max-w-md mx-auto my-20 p-8 bg-white border border-red-200 rounded-2xl shadow-sm text-center">
         <h3 className="text-lg font-bold text-red-700 mb-2">Access Restricted</h3>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { isSupabaseConfigured, supabaseAssessments } from '../services/supabase';
 import {
   Compass,
   CheckCircle2,
@@ -24,9 +25,10 @@ const Dashboard = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user?.role === 'faculty') {
+    const role = (user?.role || '').toLowerCase();
+    if (role === 'faculty') {
       navigate('/faculty', { replace: true });
-    } else if (user?.role === 'admin') {
+    } else if (role === 'admin') {
       navigate('/admin', { replace: true });
     }
   }, [user, navigate]);
@@ -34,6 +36,12 @@ const Dashboard = () => {
   const fetchAssessments = async () => {
     try {
       setLoading(true);
+      setError('');
+      if (isSupabaseConfigured) {
+        const data = await supabaseAssessments.getUserAssessments(user?._id || user?.id);
+        setAssessments(data || []);
+        return;
+      }
       const res = await api.get('/assessments/my');
       setAssessments(res.data.data.assessments || []);
     } catch (err) {
@@ -46,7 +54,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchAssessments();
-  }, []);
+  }, [user]);
 
   const completedAssessments = assessments.filter((a) => a.completed);
   const draftAssessments = assessments.filter((a) => !a.completed);
@@ -71,10 +79,10 @@ const Dashboard = () => {
             </div>
           </div>
           <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Welcome, {user?.name}
+            Welcome, {user?.name || 'Student'}
           </h1>
           <p className="text-sm text-blue-100 leading-relaxed">
-            {user?.department} • {user?.programme || user?.designation} • {user?.registerNumber || 'Faculty'}
+            {user?.department || 'Computer Science'} • {user?.programme || 'BCA'} • {user?.registerNumber || (user?.section ? `Section ${user.section}` : 'Student')}
           </p>
 
           <div className="pt-4 flex flex-wrap items-center gap-3">

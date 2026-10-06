@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { isSupabaseConfigured, supabaseAdmin } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import FacultyDashboard from '../faculty/FacultyDashboard';
 import {
@@ -50,6 +51,19 @@ const AdminDashboard = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      if (isSupabaseConfigured) {
+        const [dashResult, studentsList] = await Promise.all([
+          supabaseAdmin.getDashboard(),
+          supabaseAdmin.getStudentRecords(),
+        ]);
+        if (dashResult) {
+          setStats(dashResult.stats);
+          setAnalytics(dashResult.analytics);
+          setRecentStudents((studentsList || []).slice(0, 6));
+          return;
+        }
+      }
+
       const params = {};
       if (departmentFilter) params.department = departmentFilter;
       if (roleFilter) params.role = roleFilter;

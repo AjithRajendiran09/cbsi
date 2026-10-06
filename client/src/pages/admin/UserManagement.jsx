@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { isSupabaseConfigured, supabaseAdmin } from '../../services/supabase';
 import {
   Users,
   Search,
@@ -36,6 +37,13 @@ const UserManagement = () => {
       if (roleFilter) params.role = roleFilter;
       if (departmentFilter) params.department = departmentFilter;
 
+      if (isSupabaseConfigured) {
+        const res = await supabaseAdmin.getUsers(params);
+        setUsers(res.users);
+        setTotalPages(res.pages);
+        return;
+      }
+
       const res = await api.get('/admin/users', { params });
       setUsers(res.data.data.users);
       setTotalPages(res.data.data.pages);
@@ -60,6 +68,11 @@ const UserManagement = () => {
     if (!window.confirm(`Change user role to ${newRole}?`)) return;
     try {
       setActionLoading(true);
+      if (isSupabaseConfigured) {
+        await supabaseAdmin.updateUserRole(userId, newRole);
+        fetchUsers();
+        return;
+      }
       await api.put(`/admin/users/${userId}/role`, { role: newRole });
       fetchUsers();
     } catch (err) {
@@ -73,6 +86,11 @@ const UserManagement = () => {
     if (!window.confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this account?`)) return;
     try {
       setActionLoading(true);
+      if (isSupabaseConfigured) {
+        await supabaseAdmin.toggleUserStatus(userId, currentStatus);
+        fetchUsers();
+        return;
+      }
       await api.patch(`/admin/users/${userId}/status`);
       fetchUsers();
     } catch (err) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import { isSupabaseConfigured, supabaseAssessments } from '../services/supabase';
 import html2pdf from 'html2pdf.js';
 import {
   Compass,
@@ -35,6 +36,13 @@ const Report = () => {
     const fetchAssessment = async () => {
       try {
         setLoading(true);
+        if (isSupabaseConfigured) {
+          const data = await supabaseAssessments.getAssessmentById(id);
+          if (data) {
+            setAssessment(data);
+            return;
+          }
+        }
         const res = await api.get(`/assessments/${id}`);
         setAssessment(res.data.data.assessment);
       } catch (err) {
