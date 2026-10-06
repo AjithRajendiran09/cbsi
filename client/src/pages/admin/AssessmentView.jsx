@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
+import { isSupabaseConfigured, supabaseAssessments } from '../../services/supabase';
 import {
   ArrowLeft,
   RefreshCw,
@@ -31,6 +32,15 @@ const AssessmentView = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      if (isSupabaseConfigured) {
+        const [assessData, qList] = await Promise.all([
+          supabaseAssessments.getAssessmentById(id),
+          supabaseAssessments.getQuestions(),
+        ]);
+        setAssessment(assessData);
+        setQuestions(qList || []);
+        return;
+      }
       const [assessRes, qRes] = await Promise.all([
         api.get(`/assessments/${id}`),
         api.get('/questions'),

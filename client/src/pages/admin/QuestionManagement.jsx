@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { isSupabaseConfigured, supabaseAssessments } from '../../services/supabase';
 import {
   ArrowLeft,
   Plus,
@@ -40,6 +41,11 @@ const QuestionManagement = () => {
   const fetchQuestions = async () => {
     try {
       setLoading(true);
+      if (isSupabaseConfigured) {
+        const list = await supabaseAssessments.getQuestions();
+        setQuestions(list || []);
+        return;
+      }
       const res = await api.get('/admin/questions');
       setQuestions(res.data.data.questions || []);
     } catch (err) {

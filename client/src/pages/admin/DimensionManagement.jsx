@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
+import { isSupabaseConfigured } from '../../services/supabase';
+import { DIMENSIONS } from '../../utils/constants';
 import { ArrowLeft, Edit2, Layers, CheckCircle2 } from 'lucide-react';
 
 const DimensionManagement = () => {
@@ -11,6 +13,17 @@ const DimensionManagement = () => {
   const fetchDimensions = async () => {
     try {
       setLoading(true);
+      if (isSupabaseConfigured) {
+        setDimensions(DIMENSIONS.map((d, idx) => ({
+          _id: d.code,
+          code: d.code,
+          name: d.name,
+          description: d.description,
+          order: idx + 1,
+          maxScore: 24,
+        })));
+        return;
+      }
       const res = await api.get('/dimensions');
       setDimensions(res.data.data.dimensions);
     } catch (err) {
